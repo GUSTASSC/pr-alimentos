@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /tmp/
+Disallow: /data/
+Disallow: /scripts/
+Disallow: /docs/
+Sitemap: https://pr-alimentos.vercel.app/sitemap.xml

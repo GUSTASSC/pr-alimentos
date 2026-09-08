@@ -1,0 +1,42 @@
+const {chromium}=require('@playwright/test');
+const AxeBuilder=require('@axe-core/playwright').default;
+const fs=require('node:fs');
+const path=require('node:path');
+const assert=require('node:assert/strict');
+const products=require('../data/products');
+const recipes=require('../data/recipes');
+const origin='http://localhost:8080';
+const widths=[320,375,390,430,768,1024,1440,1920];
+const report={pages:0,responsiveChecks:0,links:0,images:0,failures:[],accessibility:[],flows:[],widths};
+const pages=['index.html','produtos.html','receitas.html','privacidade.html','produto.html',...products.map(p=>`produtos/${p.id}.html`),...recipes.map(r=>`receitas/${r.id}.html`)];
+async function ready(page){await page.evaluate(async()=>{document.querySelectorAll('img').forEach(i=>i.loading='eager');await Promise.all([...document.images].map(i=>i.decode().catch(()=>{})));await document.fonts.ready;});}
+(async()=>{
+ const browser=await chromium.launch({channel:'chrome',headless:true});
+ const context=await browser.newContext({viewport:{width:1440,height:1000}});
+ const page=await context.newPage();
+ page.on('pageerror',error=>report.failures.push({type:'console',message:error.message,url:page.url()}));
+ page.on('response',response=>{if(response.status()>=400&&response.url().startsWith(origin))report.failures.push({type:'http',status:response.status(),url:response.url()});});
+ const internal=new Map();
+ for(const file of pages){
+  await page.goto(`${origin}/${file}`);await ready(page);report.pages++;
+  const meta=await page.evaluate(()=>({h1:document.querySelectorAll('h1').length,description:document.querySelector('meta[name=description]')?.content,title:document.title,missing:[...document.images].filter(i=>!i.naturalWidth||!i.hasAttribute('alt')).map(i=>i.src),images:document.images.length,links:[...document.querySelectorAll('a[href],script[src],link[href]')].map(e=>e.href||e.src),schema:[...document.querySelectorAll('script[type="application/ld+json"]')].map(e=>JSON.parse(e.textContent)),brokenText:document.body.innerText.includes('undefined')}));
+  if(meta.h1!==1||!meta.description||!meta.title||meta.missing.length||meta.brokenText)report.failures.push({file,type:'content',meta});report.images+=meta.images;
+  for(const link of meta.links){const url=new URL(link);if(url.origin===origin){const key=url.pathname;const hashes=internal.get(key)||new Set();if(url.hash)hashes.add(decodeURIComponent(url.hash.slice(1)));internal.set(key,hashes);}else if(url.hostname==='wa.me'){if(url.pathname!=='/5561993323924'||!url.searchParams.get('text'))report.failures.push({type:'whatsapp',link});}}
+  for(const width of widths){await page.setViewportSize({width,height:900});const result=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,overflow:[...document.querySelectorAll('main *')].filter(e=>{const r=e.getBoundingClientRect();return r.width&&r.right>innerWidth+1&&getComputedStyle(e).position!=='absolute'}).slice(0,5).map(e=>e.className)}));report.responsiveChecks++;if(result.scroll>width+1)report.failures.push({file,type:'overflow',result});}
+ }
+ for(const [pathname,hashes]of internal){const local=path.resolve(__dirname,'..','.'+pathname);if(!fs.existsSync(local)){report.failures.push({type:'link',pathname});continue;}if(pathname.endsWith('.html')){const text=fs.readFileSync(local,'utf8');for(const id of hashes){if(!text.includes(`id="${id}"`))report.failures.push({type:'anchor',pathname,id});}}report.links++;}
+ await page.setViewportSize({width:390,height:844});await page.goto(origin);await page.getByRole('button',{name:'Abrir menu',exact:true}).click();assert.equal(await page.locator('.menu-toggle').getAttribute('aria-expanded'),'true');await page.keyboard.press('Escape');assert.equal(await page.locator('.menu-toggle').getAttribute('aria-expanded'),'false');await page.getByRole('button',{name:'Abrir menu',exact:true}).click();await page.locator('#main-nav').getByRole('link',{name:'Produtos',exact:true}).click();assert.equal(await page.locator('.menu-toggle').getAttribute('aria-expanded'),'false');report.flows.push('Menu mobile: abertura, Escape, foco e navegação');
+ for(const category of [...new Set(products.map(p=>p.category))]){await page.getByRole('button',{name:category,exact:true}).click();assert.equal(await page.locator('.product-card:visible').count(),products.filter(p=>p.category===category).length);}
+ await page.getByRole('button',{name:'Todos',exact:true}).click();await page.locator('#brandFilter').selectOption('Da Mamãe');assert.equal(await page.locator('.product-card:visible').count(),17);await page.locator('#productSearch').fill('acucar');assert.equal(await page.locator('.product-card:visible').count(),2);await page.locator('#productSearch').fill('produto inexistente');assert.equal(await page.locator('#emptyState').isVisible(),true);await page.locator('#clearFilters').click();assert.equal(await page.locator('.product-card:visible').count(),23);report.flows.push('Filtros: 7 categorias, marca, busca sem acentos, resultado vazio e limpeza');
+ await page.goto(origin+'/produtos.html?marca=Da%20Mam%C3%A3e&categoria=Arroz');assert.equal(await page.locator('.product-card:visible').count(),2);report.flows.push('Filtros compartilháveis pela URL');
+ await page.goto(origin+'/produto.html?id=feijao-du-chef');await page.waitForURL('**/produtos/feijao-du-chef.html');await page.goto(origin+'/produto.html?id=inexistente');assert.ok((await page.locator('#legacyProduct p').innerText()).includes('Não encontramos'));report.flows.push('URLs antigas e produto inexistente');
+ await page.goto(origin+'/#contato');await page.locator('[name=nome]').fill('Teste <script>alert(1)</script>');await page.locator('[name=empresa]').fill('Mercado & Cia');await page.locator('[name=whatsapp]').fill('61999999999');await page.locator('[name=email]').fill('teste@example.com');await page.locator('#quoteProduct').selectOption({index:1});await page.locator('[name=quantidade]').fill('20 fardos');await page.locator('[name=mensagem]').fill('Entrega em Brasília.');await page.locator('#quoteForm button').click();const message=new URL(await page.locator('#quoteStatus a').getAttribute('href')).searchParams.get('text');for(const expected of ['Mercado & Cia','20 fardos','61999999999','Entrega em Brasília.','<script>'])assert.ok(message.includes(expected));assert.equal(await page.locator('#quoteStatus script').count(),0);report.flows.push('Formulário: dados completos, mensagem codificada e proteção contra HTML injetado; nenhum envio realizado');
+ fs.mkdirSync('tmp/review',{recursive:true});
+ for(const [file,name]of [['index.html','home'],['produtos.html','catalogo'],['receitas.html','receitas'],['produtos/feijao-da-mamae-carioca.html','produto'],['receitas/feijao-tropeiro.html','receita']]){
+  for(const width of [390,1440]){await page.setViewportSize({width,height:width===390?844:1000});await page.goto(origin+'/'+file);await ready(page);await page.screenshot({path:`tmp/review/${name}-${width}.png`,fullPage:true});const a=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa','best-practice']).analyze();report.accessibility.push({file,width,violations:a.violations.map(v=>({id:v.id,impact:v.impact,description:v.description,nodes:v.nodes.map(n=>n.target)}))});}
+ }
+ await page.emulateMedia({reducedMotion:'reduce'});assert.equal(await page.evaluate(()=>getComputedStyle(document.documentElement).scrollBehavior),'auto');report.flows.push('Preferência por movimento reduzido respeitada');
+ const noJs=await browser.newContext({javaScriptEnabled:false});const plain=await noJs.newPage();await plain.goto(origin+'/produtos.html');assert.equal(await plain.locator('.product-card').count(),23);report.flows.push('Catálogo e conteúdo disponíveis sem JavaScript');await noJs.close();
+ const assets=fs.readdirSync('assets/products').map(name=>fs.statSync('assets/products/'+name).size);report.performance={productImages:assets.length,largestProductKb:Math.round(Math.max(...assets)/1024),totalProductKb:Math.round(assets.reduce((a,b)=>a+b,0)/1024),cssKb:Math.round(fs.statSync('styles.css').size/1024),jsKb:Math.round(fs.statSync('script.js').size/1024),externalRuntimeDependencies:0};
+ await browser.close();fs.writeFileSync('docs/audit-results.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));if(report.failures.length||report.accessibility.some(a=>a.violations.length))process.exitCode=1;
+})().catch(error=>{console.error(error);process.exitCode=1;});

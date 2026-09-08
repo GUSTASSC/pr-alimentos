@@ -1,0 +1,25 @@
+{
+  "name": "pr-alimentos",
+  "version": "1.0.0",
+  "description": "",
+  "main": "preview-server.js",
+  "scripts": {
+    "build": "node scripts/build.js",
+    "start": "node preview-server.js",
+    "test": "node scripts/audit.js",
+    "package:vercel": "node scripts/build.js && node scripts/package-preview.js --vercel",
+    "deploy:vercel": "npm run package:vercel && npx --yes vercel@59.11.7 deploy ./vercel-site --prod --yes"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@fontsource-variable/dm-sans": "^5.3.0",
+    "@fontsource/dm-serif-display": "^5.3.0",
+    "@playwright/test": "^1.63.0",
+    "sharp": "^0.35.4"
+  },
+  "private": true
+}

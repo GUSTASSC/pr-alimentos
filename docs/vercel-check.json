@@ -1,0 +1,39 @@
+{
+  "origin": "https://pr-alimentos.vercel.app",
+  "unauthenticated": true,
+  "pages": [
+    {
+      "route": "/",
+      "status": 200,
+      "title": "Do campo para sua mesa | P&R Alimentos do Brasil",
+      "canonical": "https://pr-alimentos.vercel.app/",
+      "brokenImages": [],
+      "overflow": false
+    },
+    {
+      "route": "/produtos.html",
+      "status": 200,
+      "title": "Produtos e marcas | P&R Alimentos do Brasil",
+      "canonical": "https://pr-alimentos.vercel.app/produtos.html",
+      "brokenImages": [],
+      "overflow": false
+    },
+    {
+      "route": "/produtos/feijao-da-mamae-carioca.html",
+      "status": 200,
+      "title": "Feijão Carioca Da Mamãe 1 kg | P&R Alimentos do Brasil",
+      "canonical": "https://pr-alimentos.vercel.app/produtos/feijao-da-mamae-carioca.html",
+      "brokenImages": [],
+      "overflow": false
+    },
+    {
+      "route": "/receitas/feijao-tropeiro.html",
+      "status": 200,
+      "title": "Feijão tropeiro | P&R Alimentos do Brasil",
+      "canonical": "https://pr-alimentos.vercel.app/receitas/feijao-tropeiro.html",
+      "brokenImages": [],
+      "overflow": false
+    }
+  ],
+  "errors": []
+}

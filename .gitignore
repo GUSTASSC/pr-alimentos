@@ -1,0 +1,17 @@
+node_modules/
+test-results/
+playwright-report/
+preview-public/
+vercel-site/
+.vercel/
+entrega-cliente/
+tmp/
+.env
+.env.*
+!.env.example
+fotos/
+produtos/*.jpg
+pdf-page-*.jpg
+capa-inicial.png
+empacotamos-sua-marca.png
+data/generated-images.json

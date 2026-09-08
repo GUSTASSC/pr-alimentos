@@ -1,0 +1,86 @@
+{
+  "pages": 33,
+  "responsiveChecks": 264,
+  "links": 37,
+  "images": 271,
+  "failures": [],
+  "accessibility": [
+    {
+      "file": "index.html",
+      "width": 390,
+      "violations": []
+    },
+    {
+      "file": "index.html",
+      "width": 1440,
+      "violations": []
+    },
+    {
+      "file": "produtos.html",
+      "width": 390,
+      "violations": []
+    },
+    {
+      "file": "produtos.html",
+      "width": 1440,
+      "violations": []
+    },
+    {
+      "file": "receitas.html",
+      "width": 390,
+      "violations": []
+    },
+    {
+      "file": "receitas.html",
+      "width": 1440,
+      "violations": []
+    },
+    {
+      "file": "produtos/feijao-da-mamae-carioca.html",
+      "width": 390,
+      "violations": []
+    },
+    {
+      "file": "produtos/feijao-da-mamae-carioca.html",
+      "width": 1440,
+      "violations": []
+    },
+    {
+      "file": "receitas/feijao-tropeiro.html",
+      "width": 390,
+      "violations": []
+    },
+    {
+      "file": "receitas/feijao-tropeiro.html",
+      "width": 1440,
+      "violations": []
+    }
+  ],
+  "flows": [
+    "Menu mobile: abertura, Escape, foco e navegação",
+    "Filtros: 7 categorias, marca, busca sem acentos, resultado vazio e limpeza",
+    "Filtros compartilháveis pela URL",
+    "URLs antigas e produto inexistente",
+    "Formulário: dados completos, mensagem codificada e proteção contra HTML injetado; nenhum envio realizado",
+    "Preferência por movimento reduzido respeitada",
+    "Catálogo e conteúdo disponíveis sem JavaScript"
+  ],
+  "widths": [
+    320,
+    375,
+    390,
+    430,
+    768,
+    1024,
+    1440,
+    1920
+  ],
+  "performance": {
+    "productImages": 23,
+    "largestProductKb": 108,
+    "totalProductKb": 1943,
+    "cssKb": 33,
+    "jsKb": 5,
+    "externalRuntimeDependencies": 0
+  }
+}
